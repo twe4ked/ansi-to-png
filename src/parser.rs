@@ -1,5 +1,3 @@
-use vte;
-
 use crate::ansi::{self, Attr, Colors, List};
 
 #[derive(Debug)]
