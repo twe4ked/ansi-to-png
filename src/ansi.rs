@@ -16,10 +16,10 @@ use std::fmt;
 use std::ops::{Index, IndexMut, Mul};
 use std::str::FromStr;
 
-pub const COUNT: usize = 269;
+const COUNT: usize = 269;
 
 /// Factor for automatic computation of dim colors used by terminal.
-pub const DIM_FACTOR: f32 = 0.66;
+const DIM_FACTOR: f32 = 0.66;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Default)]
 pub struct Rgb {
@@ -293,13 +293,7 @@ pub struct IndexedColor {
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-pub struct CursorColors {
-    pub text: Option<Rgb>,
-    pub cursor: Option<Rgb>,
-}
-
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-pub struct SelectionColors {
+struct SelectionColors {
     pub text: Option<Rgb>,
     pub background: Option<Rgb>,
 }
