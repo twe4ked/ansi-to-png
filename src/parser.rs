@@ -48,8 +48,8 @@ impl vte::Perform for Parser {
                             ansi::Color::Named(index) => Some(indexed_colors[index].rgb()),
                             ansi::Color::Spec(_) => todo!(),
                         },
-                        Attr::Reset
-                        | Attr::Bold
+                        Attr::Reset => Some((255, 255, 255)),
+                        Attr::Bold
                         | Attr::Dim
                         | Attr::Italic
                         | Attr::Underline
