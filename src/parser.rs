@@ -1,5 +1,7 @@
 use vte;
 
+use crate::ansi::{self, Attr, Colors, List};
+
 #[derive(Debug)]
 pub enum Token {
     Color((u8, u8, u8)),
@@ -35,46 +37,45 @@ impl vte::Perform for Parser {
     fn osc_dispatch(&mut self, _params: &[&[u8]], _bell_terminated: bool) {}
 
     fn csi_dispatch(&mut self, params: &[i64], _intermediates: &[u8], _ignore: bool, c: char) {
-        use crate::ansi::{self, Attr, Colors, List};
+        if c != 'm' {
+            // Not a color "CSI"
+            return;
+        }
 
         let indexed_colors = List::from(&Colors::default());
 
-        if c == 'm' {
-            for attr in ansi::attrs_from_sgr_parameters(&params) {
-                if let Some(attr) = attr {
-                    let color = match attr {
-                        Attr::Foreground(foreground) => match foreground {
-                            ansi::Color::Indexed(index) => Some(indexed_colors[index].rgb()),
-                            ansi::Color::Named(index) => Some(indexed_colors[index].rgb()),
-                            ansi::Color::Spec(_) => todo!(),
-                        },
-                        Attr::Reset => Some((255, 255, 255)),
-                        Attr::Bold
-                        | Attr::Dim
-                        | Attr::Italic
-                        | Attr::Underline
-                        | Attr::BlinkSlow
-                        | Attr::BlinkFast
-                        | Attr::Reverse
-                        | Attr::Hidden
-                        | Attr::Strike
-                        | Attr::CancelBold
-                        | Attr::CancelBoldDim
-                        | Attr::CancelItalic
-                        | Attr::CancelUnderline
-                        | Attr::CancelBlink
-                        | Attr::CancelReverse
-                        | Attr::CancelHidden
-                        | Attr::CancelStrike
-                        | Attr::Background { .. } => None,
-                    };
-                    if let Some(c) = color {
-                        self.output.push(Token::Color(c));
-                    }
+        for attr in ansi::attrs_from_sgr_parameters(&params) {
+            if let Some(attr) = attr {
+                let color = match attr {
+                    Attr::Foreground(foreground) => match foreground {
+                        ansi::Color::Indexed(index) => Some(indexed_colors[index].rgb()),
+                        ansi::Color::Named(index) => Some(indexed_colors[index].rgb()),
+                        ansi::Color::Spec(_) => todo!(),
+                    },
+                    Attr::Reset => Some((255, 255, 255)),
+                    Attr::Bold
+                    | Attr::Dim
+                    | Attr::Italic
+                    | Attr::Underline
+                    | Attr::BlinkSlow
+                    | Attr::BlinkFast
+                    | Attr::Reverse
+                    | Attr::Hidden
+                    | Attr::Strike
+                    | Attr::CancelBold
+                    | Attr::CancelBoldDim
+                    | Attr::CancelItalic
+                    | Attr::CancelUnderline
+                    | Attr::CancelBlink
+                    | Attr::CancelReverse
+                    | Attr::CancelHidden
+                    | Attr::CancelStrike
+                    | Attr::Background { .. } => None,
+                };
+                if let Some(c) = color {
+                    self.output.push(Token::Color(c));
                 }
             }
-        } else {
-            // Not a color "CSI"
         }
     }
 
