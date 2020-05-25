@@ -1,6 +1,7 @@
 mod ansi;
 mod parser;
 
+use ansi::Rgb;
 use parser::{Parser, Token};
 
 use std::fs;
@@ -20,6 +21,12 @@ struct Opts {
     font: String,
 }
 
+const WHITE: Rgb = Rgb {
+    r: 255,
+    g: 255,
+    b: 255,
+};
+
 fn main() {
     let opts: Opts = Opts::parse();
 
@@ -28,7 +35,7 @@ fn main() {
 
     let mut statemachine = vte::Parser::new();
     let mut parser = Parser {
-        output: vec![Token::Color((255, 255, 255))],
+        output: vec![Token::Color(WHITE)],
     };
 
     let mut buf = [0; 2048];
@@ -84,7 +91,7 @@ fn main() {
 
     let some_random_padding = 28.0;
 
-    let mut color = (255, 255, 255);
+    let mut color = WHITE;
     let mut x_pos = padding_left;
 
     let colors_and_glyphs: Vec<_> = parser
@@ -113,7 +120,7 @@ fn main() {
             // Draw the glyph into the image per-pixel by using the draw closure
             glyph.draw(|x, y, v| {
                 // Turn the coverage into an alpha value
-                let color = Rgba([color.0, color.1, color.2, (v * 255.0) as u8]);
+                let color = Rgba([color.r, color.g, color.b, (v * 255.0) as u8]);
 
                 // Offset the position by the glyph bounding box
                 let x = x + bounding_box.min.x as u32;

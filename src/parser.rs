@@ -1,8 +1,8 @@
-use crate::ansi::{self, Attr, Colors, List};
+use crate::ansi::{self, Attr, Colors, List, Rgb};
 
 #[derive(Debug)]
 pub enum Token {
-    Color((u8, u8, u8)),
+    Color(Rgb),
     Char(char),
 }
 
@@ -46,11 +46,11 @@ impl vte::Perform for Parser {
             if let Some(attr) = attr {
                 let color = match attr {
                     Attr::Foreground(foreground) => match foreground {
-                        ansi::Color::Indexed(index) => Some(indexed_colors[index].rgb()),
-                        ansi::Color::Named(index) => Some(indexed_colors[index].rgb()),
+                        ansi::Color::Indexed(index) => Some(indexed_colors[index]),
+                        ansi::Color::Named(index) => Some(indexed_colors[index]),
                         ansi::Color::Spec(_) => todo!(),
                     },
-                    Attr::Reset => Some((255, 255, 255)),
+                    Attr::Reset => Some(crate::WHITE),
                     Attr::Bold
                     | Attr::Dim
                     | Attr::Italic
