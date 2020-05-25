@@ -6,7 +6,7 @@ use std::fs;
 use crate::ansi::WHITE;
 use crate::parser::Token;
 
-pub fn render(tokens: &[Token], chars_count: usize, font: &str, out: &str) {
+pub fn render(tokens: &[Token], font: &str, out: &str) {
     // Load the font
     let font_data = fs::read(&font).unwrap();
 
@@ -29,6 +29,14 @@ pub fn render(tokens: &[Token], chars_count: usize, font: &str, out: &str) {
     };
 
     let some_random_height_padding = 10;
+
+    let chars_count = tokens
+        .iter()
+        .filter(|t| match t {
+            Token::Char(_) => true,
+            _ => false,
+        })
+        .count();
 
     // Create a new RGBA image
     let padding_left = 10;

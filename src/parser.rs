@@ -1,7 +1,7 @@
 use crate::ansi::{self, Attr, Colors, List, Rgb, WHITE};
 use std::io::Read;
 
-pub fn parse(input: std::io::Stdin) -> (usize, Vec<Token>) {
+pub fn parse(input: std::io::Stdin) -> Vec<Token> {
     let mut handle = input.lock();
 
     let mut statemachine = vte::Parser::new();
@@ -26,7 +26,7 @@ pub fn parse(input: std::io::Stdin) -> (usize, Vec<Token>) {
         }
     }
 
-    (parser.chars_count(), parser.output)
+    parser.output
 }
 
 #[derive(Debug)]
@@ -38,18 +38,6 @@ pub enum Token {
 #[derive(Debug)]
 pub struct Parser {
     pub output: Vec<Token>,
-}
-
-impl Parser {
-    pub fn chars_count(&self) -> usize {
-        self.output
-            .iter()
-            .filter(|t| match t {
-                Token::Char(_) => true,
-                _ => false,
-            })
-            .count()
-    }
 }
 
 impl vte::Perform for Parser {

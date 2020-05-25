@@ -18,9 +18,9 @@ struct Opts {
 fn main() {
     let opts: Opts = Opts::parse();
 
-    let (chars_count, tokens) = parser::parse(io::stdin());
+    let tokens = parser::parse(io::stdin());
 
-    renderer::render(&tokens, chars_count, &opts.font, &opts.out);
+    renderer::render(&tokens, &opts.font, &opts.out);
 
     println!("Generated: {}", opts.out);
 }
