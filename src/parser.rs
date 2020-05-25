@@ -1,12 +1,14 @@
-use crate::ansi::{attrs_from_sgr_parameters, Attr, Color, Colors, List, Rgb, WHITE};
+use crate::ansi::{attrs_from_sgr_parameters, Attr, Color, Colors, List, PrimaryColors, Rgb};
 use std::io::Read;
 
 pub fn parse(input: std::io::Stdin) -> Vec<Token> {
     let mut handle = input.lock();
 
+    let foreground = PrimaryColors::default().foreground;
+
     let mut statemachine = vte::Parser::new();
     let mut parser = Parser {
-        output: vec![Token::Color(WHITE)],
+        output: vec![Token::Color(foreground)],
     };
 
     let mut buf = [0; 2048];
@@ -57,6 +59,7 @@ impl vte::Perform for Parser {
             return;
         }
 
+        let foreground = PrimaryColors::default().foreground;
         let indexed_colors = List::from(&Colors::default());
 
         for attr in attrs_from_sgr_parameters(&params) {
@@ -67,7 +70,7 @@ impl vte::Perform for Parser {
                         Color::Named(index) => Some(indexed_colors[index]),
                         Color::Spec(_) => todo!(),
                     },
-                    Attr::Reset => Some(WHITE),
+                    Attr::Reset => Some(foreground),
                     Attr::Bold
                     | Attr::Dim
                     | Attr::Italic

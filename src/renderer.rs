@@ -3,7 +3,7 @@ use rusttype::{point, Font, Scale};
 
 use std::fs;
 
-use crate::ansi::WHITE;
+use crate::ansi::PrimaryColors;
 use crate::parser::Token;
 
 pub fn render(tokens: &[Token], font: &str, out: &str) {
@@ -51,7 +51,7 @@ pub fn render(tokens: &[Token], font: &str, out: &str) {
 
     let some_random_padding = 28.0;
 
-    let mut color = WHITE;
+    let mut color = PrimaryColors::default().foreground;
     let mut x_pos = padding_left;
 
     let colors_and_glyphs: Vec<_> = tokens
