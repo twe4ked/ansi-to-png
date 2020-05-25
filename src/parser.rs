@@ -1,51 +1,8 @@
 use vte;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Color {
-    Aqua,
-    Black,
-    Blue,
-    Fuchsia,
-    Green,
-    Grey,
-    Lime,
-    Maroon,
-    Navy,
-    Olive,
-    Purple,
-    Red,
-    Silver,
-    Teal,
-    White,
-    Yellow,
-}
-
-impl Color {
-    pub fn rgb(&self) -> (u8, u8, u8) {
-        match self {
-            Color::Black => (0, 0, 0),
-            Color::Maroon => (128, 0, 0),
-            Color::Green => (0, 128, 0),
-            Color::Olive => (128, 128, 0),
-            Color::Navy => (0, 0, 128),
-            Color::Purple => (128, 0, 128),
-            Color::Teal => (0, 128, 128),
-            Color::Silver => (192, 192, 192),
-            Color::Grey => (128, 128, 128),
-            Color::Red => (255, 0, 0),
-            Color::Lime => (0, 255, 0),
-            Color::Yellow => (255, 255, 0),
-            Color::Blue => (0, 0, 255),
-            Color::Fuchsia => (255, 0, 255),
-            Color::Aqua => (0, 255, 255),
-            Color::White => (255, 255, 255),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub enum Token {
-    Color(Color),
+    Color((u8, u8, u8)),
     Char(char),
 }
 
@@ -78,34 +35,17 @@ impl vte::Perform for Parser {
     fn osc_dispatch(&mut self, _params: &[&[u8]], _bell_terminated: bool) {}
 
     fn csi_dispatch(&mut self, params: &[i64], _intermediates: &[u8], _ignore: bool, c: char) {
-        use crate::ansi::{self, Attr};
+        use crate::ansi::{self, Attr, Colors, List};
+
+        let indexed_colors = List::from(&Colors::default());
 
         if c == 'm' {
-            for attr in crate::ansi::attrs_from_sgr_parameters(&params) {
+            for attr in ansi::attrs_from_sgr_parameters(&params) {
                 if let Some(attr) = attr {
                     let color = match attr {
                         Attr::Foreground(foreground) => match foreground {
-                            ansi::Color::Indexed(index) => Some(match index {
-                                // Xterm system colors.
-                                0 => Color::Black,
-                                1 => Color::Maroon,
-                                2 => Color::Green,
-                                3 => Color::Olive,
-                                4 => Color::Navy,
-                                5 => Color::Purple,
-                                6 => Color::Teal,
-                                7 => Color::Silver,
-                                8 => Color::Grey,
-                                9 => Color::Red,
-                                10 => Color::Lime,
-                                11 => Color::Yellow,
-                                12 => Color::Blue,
-                                13 => Color::Fuchsia,
-                                14 => Color::Aqua,
-                                15 => Color::White,
-                                _ => todo!(),
-                            }),
-                            ansi::Color::Named(_) => todo!(),
+                            ansi::Color::Indexed(index) => Some(indexed_colors[index].rgb()),
+                            ansi::Color::Named(index) => Some(indexed_colors[index].rgb()),
                             ansi::Color::Spec(_) => todo!(),
                         },
                         Attr::Reset

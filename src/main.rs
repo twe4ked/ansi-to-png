@@ -1,7 +1,7 @@
 mod ansi;
 mod parser;
 
-use parser::{Color, Parser, Token};
+use parser::{Parser, Token};
 
 use std::fs;
 use std::io::{self, Read};
@@ -28,7 +28,7 @@ fn main() {
 
     let mut statemachine = vte::Parser::new();
     let mut parser = Parser {
-        output: vec![Token::Color(Color::White)],
+        output: vec![Token::Color((255, 255, 255))],
     };
 
     let mut buf = [0; 2048];
@@ -84,7 +84,7 @@ fn main() {
 
     let some_random_padding = 28.0;
 
-    let mut color = Color::White.rgb();
+    let mut color = (255, 255, 255);
     let mut x_pos = padding_left;
 
     let colors_and_glyphs: Vec<_> = parser
@@ -92,7 +92,7 @@ fn main() {
         .iter()
         .filter_map(|token| match token {
             Token::Color(c) => {
-                color = c.rgb();
+                color = *c;
                 None
             }
             Token::Char(c) => {
