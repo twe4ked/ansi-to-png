@@ -87,6 +87,7 @@ pub fn render(tokens: &[Token], font: &str, out: &str) {
 
                 image.get_pixel_mut(x, y).blend(&color);
 
+                // For debugging bounding boxes:
                 // image.put_pixel(x, y, color);
             });
         }
