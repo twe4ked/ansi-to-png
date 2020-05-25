@@ -1,4 +1,33 @@
-use crate::ansi::{self, Attr, Colors, List, Rgb};
+use crate::ansi::{self, Attr, Colors, List, Rgb, WHITE};
+use std::io::Read;
+
+pub fn parse(input: std::io::Stdin) -> (usize, Vec<Token>) {
+    let mut handle = input.lock();
+
+    let mut statemachine = vte::Parser::new();
+    let mut parser = Parser {
+        output: vec![Token::Color(WHITE)],
+    };
+
+    let mut buf = [0; 2048];
+
+    loop {
+        match handle.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => {
+                for byte in &buf[..n] {
+                    statemachine.advance(&mut parser, *byte);
+                }
+            }
+            Err(err) => {
+                println!("err: {}", err);
+                break;
+            }
+        }
+    }
+
+    (parser.chars_count(), parser.output)
+}
 
 #[derive(Debug)]
 pub enum Token {
@@ -50,7 +79,7 @@ impl vte::Perform for Parser {
                         ansi::Color::Named(index) => Some(indexed_colors[index]),
                         ansi::Color::Spec(_) => todo!(),
                     },
-                    Attr::Reset => Some(crate::WHITE),
+                    Attr::Reset => Some(WHITE),
                     Attr::Bold
                     | Attr::Dim
                     | Attr::Italic

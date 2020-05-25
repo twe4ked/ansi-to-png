@@ -21,6 +21,12 @@ const COUNT: usize = 269;
 /// Factor for automatic computation of dim colors used by terminal.
 const DIM_FACTOR: f32 = 0.66;
 
+pub const WHITE: Rgb = Rgb {
+    r: 255,
+    g: 255,
+    b: 255,
+};
+
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Default)]
 pub struct Rgb {
     pub r: u8,

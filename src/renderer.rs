@@ -3,8 +3,8 @@ use rusttype::{point, Font, Scale};
 
 use std::fs;
 
+use crate::ansi::WHITE;
 use crate::parser::Token;
-use crate::WHITE;
 
 pub fn render(tokens: &[Token], chars_count: usize, font: &str, out: &str) {
     // Load the font
