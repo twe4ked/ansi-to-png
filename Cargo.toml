@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 vte = "0.8.0"
-rusttype = "0.9.2"
 image = "0.23.4"
 clap = "3.0.0-beta.1"
+freetype-rs = "0.25.0"

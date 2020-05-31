@@ -1,34 +1,49 @@
-use image::{DynamicImage, Pixel, Rgba};
-use rusttype::{point, Font, Scale};
-
-use std::fs;
+use freetype as ft;
+use image::{DynamicImage, ImageBuffer, Pixel, Rgba};
 
 use crate::ansi::PrimaryColors;
 use crate::parser::Token;
 
-pub fn render(tokens: &[Token], font: &str, out: &str) {
-    // Load the font
-    let font_data = fs::read(&font).unwrap();
+const HEIGHT: u32 = 32;
 
-    // This only succeeds if collection consists of one font
-    let font = Font::try_from_bytes(&font_data).unwrap();
+fn draw_bitmap(
+    bitmap: ft::Bitmap,
+    image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+    color: crate::ansi::Rgb,
+    x: usize,
+    y: usize,
+) {
+    let mut p = 0;
+    let mut q = 0;
+    let w = bitmap.width() as usize;
+    let x_max = x + w;
+    let y_max = y + bitmap.rows() as usize;
+
+    for i in x..x_max {
+        for j in y..y_max {
+            let v = bitmap.buffer()[q * w + p] as f32;
+            let color = Rgba([color.r, color.g, color.b, v as u8]);
+
+            image.get_pixel_mut(i as u32, j as u32).blend(&color);
+
+            // For debugging bounding boxes:
+            // image.put_pixel(i as u32, j as u32, color);
+
+            q += 1;
+        }
+        q = 0;
+        p += 1;
+    }
+}
+
+pub fn render(tokens: &[Token], font: &str, out: &str) {
+    let library = ft::Library::init().unwrap();
+
+    // Load the font
+    let face = library.new_face(font, 0).unwrap();
 
     // The font size to use
-    let scale = Scale::uniform(32.0);
-
-    let (glyphs_height, glyphs_width) = {
-        let v_metrics = font.v_metrics(scale);
-        let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
-
-        // Generate a glyph to get the width/height. Because we're using a monospaced font we can
-        // use any char.
-        let glyph = font.glyph('m').scaled(scale).positioned(point(0.0, 0.0));
-        let glyphs_width = glyph.pixel_bounding_box().unwrap().width() as u32;
-
-        (glyphs_height, glyphs_width)
-    };
-
-    let some_random_height_padding = 10;
+    face.set_pixel_sizes(0, HEIGHT).unwrap();
 
     let chars_count = tokens
         .iter()
@@ -41,55 +56,41 @@ pub fn render(tokens: &[Token], font: &str, out: &str) {
     // Create a new RGBA image
     let padding_left = 10;
     let padding_right = 10;
-    let image_width = (glyphs_width * chars_count as u32) + padding_left + padding_right;
-    let image_height = glyphs_height + some_random_height_padding;
+    let image_width: u32 = {
+        // Generate a glyph to get the width. Because we're using a monospaced font we can use any char.
+        face.load_char('m' as usize, ft::face::LoadFlag::RENDER)
+            .unwrap();
+        let width = face.glyph().advance().x >> 6;
+        (width as u32 * chars_count as u32) + padding_left + padding_right
+    };
+    let image_height = HEIGHT + 16;
     let mut image = DynamicImage::new_rgba8(image_width, image_height).to_rgba();
+
     // Black background
     for (_, _, p) in image.enumerate_pixels_mut() {
         *p = Rgba([0, 0, 0, 255]);
     }
 
-    let some_random_padding = 28.0;
-
     let mut color = PrimaryColors::default().foreground;
-    let mut x_pos = padding_left;
+    let mut x_pos = padding_left as usize;
 
-    let colors_and_glyphs: Vec<_> = tokens
-        .iter()
-        .filter_map(|token| match token {
+    for token in tokens {
+        match token {
             Token::Color(c) => {
                 color = *c;
-                None
             }
             Token::Char(c) => {
-                let glyph = font
-                    .glyph(*c)
-                    .scaled(scale)
-                    .positioned(point(x_pos as f32, some_random_padding));
+                face.load_char(*c as usize, ft::face::LoadFlag::RENDER)
+                    .unwrap();
+                let glyph = face.glyph();
 
-                x_pos += glyphs_width;
+                let x = glyph.bitmap_left() as usize + x_pos;
+                let y = HEIGHT as usize - glyph.bitmap_top() as usize;
 
-                Some((color, glyph))
+                draw_bitmap(glyph.bitmap(), &mut image, color, x, y);
+                let advance = glyph.advance();
+                x_pos += advance.x as usize >> 6;
             }
-        })
-        .collect();
-
-    for (color, glyph) in colors_and_glyphs {
-        if let Some(bounding_box) = glyph.pixel_bounding_box() {
-            // Draw the glyph into the image per-pixel by using the draw closure
-            glyph.draw(|x, y, v| {
-                // Turn the coverage into an alpha value
-                let color = Rgba([color.r, color.g, color.b, (v * 255.0) as u8]);
-
-                // Offset the position by the glyph bounding box
-                let x = x + bounding_box.min.x as u32;
-                let y = y + bounding_box.min.y as u32;
-
-                image.get_pixel_mut(x, y).blend(&color);
-
-                // For debugging bounding boxes:
-                // image.put_pixel(x, y, color);
-            });
         }
     }
 
