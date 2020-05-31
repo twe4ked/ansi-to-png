@@ -66,9 +66,10 @@ pub fn render(tokens: &[Token], font: &str, out: &str) {
     let image_height = HEIGHT + 16;
     let mut image = DynamicImage::new_rgba8(image_width, image_height).to_rgba();
 
-    // Black background
+    // Set background
+    let background = PrimaryColors::default().background;
     for (_, _, p) in image.enumerate_pixels_mut() {
-        *p = Rgba([0, 0, 0, 255]);
+        *p = Rgba([background.r, background.g, background.b, 255]);
     }
 
     let mut color = PrimaryColors::default().foreground;
