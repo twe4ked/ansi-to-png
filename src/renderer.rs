@@ -22,9 +22,19 @@ fn draw_bitmap(
     for i in x..x_max {
         for j in y..y_max {
             let v = bitmap.buffer()[q * w + p] as f32;
-            let color = Rgba([color.r, color.g, color.b, v as u8]);
+            let x = Rgba([color.r, color.g, color.b, 255]);
 
-            image.get_pixel_mut(i as u32, j as u32).blend(&color);
+            if j == 37 || j == 38 {
+                image.get_pixel_mut(i as u32, j as u32).blend(&x);
+            }
+
+            if v > 0.0 {
+                let background = PrimaryColors::default().background;
+                let mut new_color = Rgba([background.r, background.g, background.b, 255]);
+                new_color.blend(&Rgba([color.r, color.g, color.b, v as u8]));
+                // image.get_pixel_mut(i as u32, j as u32).blend(&new_color);
+                image.put_pixel(i as u32, j as u32, new_color);
+            }
 
             // For debugging bounding boxes:
             // image.put_pixel(i as u32, j as u32, color);
@@ -74,6 +84,9 @@ pub fn render(tokens: &[Token], font: &str, out: &str) {
 
     let mut color = PrimaryColors::default().foreground;
     let mut x_pos = padding_left as usize;
+
+    // let underline_position = face.underline_position();
+    // dbg!(underline_position * -1);
 
     for token in tokens {
         match token {
